@@ -1,8 +1,12 @@
-__pycache__/
-*.pyc
-.pytest_cache/
-.mypy_cache/
+
+# docs build output
 *.egg-info/
+*.pyc
+.mypy_cache/
+.pytest_cache/
+.venv/
+/site/
+__pycache__/
 build/
 dist/
-.venv/
+site/

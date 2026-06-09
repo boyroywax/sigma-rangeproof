@@ -1,0 +1,45 @@
+site_name: sigma-rangeproof
+site_description: Zero-knowledge range proofs in pure Python, explained from the ground up.
+docs_dir: docs
+repo_url: https://github.com/boyroywax/sigma-rangeproof
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: indigo
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+
+nav:
+  - Overview: index.md
+  - The math you need: background.md
+  - Sigma protocols: sigma-protocols.md
+  - From bits to a range proof: range-proof.md
+  - Reading the code: code.md
+  - Security and parameters: security.md
+  - API reference: api.md
+
+markdown_extensions:
+  - admonition
+  - footnotes
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+  - toc:
+      permalink: true
+
+extra_javascript:
+  - js/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js

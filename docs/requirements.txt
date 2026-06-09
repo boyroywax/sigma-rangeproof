@@ -1,0 +1,7 @@
+# Build the documentation site:
+#   pip install -r docs/requirements.txt
+#   mkdocs serve     # live preview at http://127.0.0.1:8000
+#   mkdocs build     # static site into ./site
+mkdocs==1.6.1
+mkdocs-material==9.5.39
+pymdown-extensions==10.11.2
