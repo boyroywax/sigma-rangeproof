@@ -104,7 +104,9 @@ None of the maintained Bulletproofs code targets Python, and the inner-product
 argument behind it is genuinely fiddly to get right. For a ten-bit score the
 size gap is a few dozen group elements, so the simpler construction here is the
 better trade. If your ranges or volumes grow, reach for a Bulletproofs library
-in Rust.
+in Rust — the [related-work page](https://boyroywax.github.io/sigma-rangeproof/related-work/)
+surveys the Python ZK options (zkbp, zksk, py_ecc, pysnark, ezkl, …) and when to
+pick each.
 
 ## A word on trust
 
