@@ -102,6 +102,123 @@ def test_negative_inputs_rejected():
         prove_ge(-1, r, 0, bits=64)
 
 
+# ─── Hostile-input bounds: the verifier must not be made to do arbitrary work ─
+
+def test_oversized_bits_in_proof_object_rejected_fast(proof740):
+    """A proof claiming an absurd ``bits`` value is rejected before any modexp."""
+    from sigma_rangeproof import MAX_BITS, RangeProof
+
+    c, _, _ = proof740
+    bogus = RangeProof(bits=MAX_BITS + 1, commitments=[1], bit_proofs=[{}])
+    assert verify_ge(c, 700, bogus) is False
+
+
+def test_zero_bits_in_proof_object_rejected(proof740):
+    from sigma_rangeproof import RangeProof
+
+    c, _, _ = proof740
+    bogus = RangeProof(bits=0, commitments=[], bit_proofs=[])
+    assert verify_ge(c, 700, bogus) is False
+
+
+def test_prove_ge_rejects_bits_above_max():
+    from sigma_rangeproof import MAX_BITS
+
+    _, r = commit(740)
+    with pytest.raises(ValueError):
+        prove_ge(740, r, 700, bits=MAX_BITS + 1)
+
+
+def test_verify_ge_rejects_threshold_above_q(proof740):
+    c, _, proof = proof740
+    assert verify_ge(c, P.q, proof) is False
+    assert verify_ge(c, P.q + 1, proof) is False
+
+
+def test_prove_ge_rejects_value_above_q():
+    # Value ≥ q must raise. We can't ``commit`` such a value (the new pedersen
+    # guard rejects it), but we can fabricate any blinding to feed prove_ge
+    # — it should reject before touching ``commit``.
+    with pytest.raises(ValueError):
+        prove_ge(P.q, 0, 0, bits=8)
+
+
+def test_prove_ge_rejects_threshold_above_q():
+    _, r = commit(0)
+    with pytest.raises(ValueError):
+        prove_ge(0, r, P.q, bits=8)
+
+
+def test_commit_rejects_value_above_q():
+    with pytest.raises(ValueError):
+        commit(P.q)
+    with pytest.raises(ValueError):
+        commit(P.q + 1)
+
+
+def test_commit_rejects_negative_value():
+    with pytest.raises(ValueError):
+        commit(-1)
+
+
+def test_commit_rejects_blinding_above_q():
+    with pytest.raises(ValueError):
+        commit(0, P.q)
+    with pytest.raises(ValueError):
+        commit(0, -1)
+
+
+def test_from_dict_rejects_bits_above_max():
+    from sigma_rangeproof import MAX_BITS, RangeProof
+
+    d = {"bits": MAX_BITS + 1, "commitments": [], "bit_proofs": []}
+    with pytest.raises(ValueError):
+        RangeProof.from_dict(d)
+
+
+def test_from_dict_rejects_oversized_group_element(proof740):
+    """A 10 KiB hex string for a group element is rejected before int()."""
+    from sigma_rangeproof import RangeProof
+
+    _, _, proof = proof740
+    d = proof.to_dict()
+    huge = "0x" + "a" * 20_000  # ~10 KiB hex; 8x wider than elem_bytes
+    d["commitments"][0] = huge
+    with pytest.raises(ValueError):
+        RangeProof.from_dict(d)
+
+
+def test_from_dict_rejects_oversized_scalar(proof740):
+    from sigma_rangeproof import RangeProof
+
+    _, _, proof = proof740
+    d = proof.to_dict()
+    huge = "0x" + "a" * 20_000
+    d["bit_proofs"][0]["z0"] = huge
+    with pytest.raises(ValueError):
+        RangeProof.from_dict(d)
+
+
+def test_from_dict_rejects_length_mismatch(proof740):
+    from sigma_rangeproof import RangeProof
+
+    _, _, proof = proof740
+    d = proof.to_dict()
+    d["commitments"] = d["commitments"][:-1]  # one short
+    with pytest.raises(ValueError):
+        RangeProof.from_dict(d)
+
+
+def test_from_dict_rejects_missing_keys(proof740):
+    from sigma_rangeproof import RangeProof
+
+    _, _, proof = proof740
+    d = proof.to_dict()
+    del d["bit_proofs"][0]["z0"]
+    with pytest.raises(ValueError):
+        RangeProof.from_dict(d)
+
+
 # ─── The fixes do not break honest proofs ──────────────────────────────────
 
 def test_honest_proof_still_verifies(proof740):

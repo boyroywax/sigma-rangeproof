@@ -115,6 +115,14 @@ another, and the positions of the bits cannot be reordered. What verification
 does *not* do is tie the proof to a sender, a session, or a moment in time; that
 is context the caller layers on, as noted above.
 
+The verifier also bounds its own work before any modular arithmetic runs. A
+proof claiming more than `MAX_BITS = 64` bit positions, or a threshold outside
+`[0, q)`, is rejected immediately. Deserialization rejects hex fields wider
+than the canonical group-element or scalar byte width. The point is that a
+hostile proof cannot push the verifier into arbitrary work by inflating
+`bits` or shipping kibibyte-long integers; the cryptographic checks only run
+on inputs that already fit the schema.
+
 ## Why these parameters
 
 The prime is RFC 3526 group 14, a 2048-bit safe prime that has been public and

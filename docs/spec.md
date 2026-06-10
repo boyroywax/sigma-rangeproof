@@ -134,3 +134,23 @@ A conforming verifier, given `(commitment, threshold, proof)`:
 
 Steps 2 and 3 are what make the proof non-malleable and immune to
 out-of-subgroup inputs; see [Security and parameters](security.md#what-verification-enforces-on-an-untrusted-proof).
+
+## Verifier limits
+
+A conforming verifier processing a proof from an untrusted source MUST also
+enforce the following bounds before performing any modular exponentiation, so
+that hostile input cannot inflate verifier cost:
+
+- `1 ≤ bits ≤ 64`. The default range proof uses `bits = 32`; the cap of 64
+  covers every realistic integer threshold and lets the verifier reject an
+  oversized proof in constant time.
+- `0 ≤ threshold < q`. A threshold outside the scalar range cannot describe
+  a meaningful statement; reject without further work.
+- Each serialized group element MUST fit in `2 · elem_bytes` hex characters
+  (`= 512` for the default group, `+ 2` for the optional `0x` prefix). Each
+  serialized scalar MUST fit in `2 · scalar_bytes` hex characters.
+- `len(commitments) == len(bit_proofs) == bits`, and each bit-proof entry
+  MUST contain exactly the keys `a0`, `a1`, `e0`, `e1`, `z0`, `z1`.
+
+These limits are exposed in the reference implementation as
+`sigma_rangeproof.MAX_BITS` and `Params.{elem_bytes, scalar_bytes}`.

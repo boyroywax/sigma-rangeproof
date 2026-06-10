@@ -25,6 +25,7 @@ from dataclasses import dataclass
 
 from .group import (
     DEFAULT_PARAMS,
+    MAX_BITS,
     Params,
     in_subgroup,
     is_canonical_scalar,
@@ -118,12 +119,66 @@ class RangeProof:
         }
 
     @classmethod
-    def from_dict(cls, d: dict) -> RangeProof:
-        return cls(
-            bits=int(d["bits"]),
-            commitments=[int(c, 16) for c in d["commitments"]],
-            bit_proofs=[{k: int(v, 16) for k, v in bp.items()} for bp in d["bit_proofs"]],
-        )
+    def from_dict(cls, d: dict, *, params: Params = DEFAULT_PARAMS) -> RangeProof:
+        """Parse a serialized proof, with strict bounds on every field.
+
+        The bounds are intentionally cheap (length checks on the hex strings
+        and a cap on ``bits``) so an untrusted proof cannot push the verifier
+        into expensive modular arithmetic before the structural sanity checks
+        have run. Cryptographic checks (subgroup, canonical scalar) still
+        happen later in :func:`verify_ge`.
+        """
+        if not isinstance(d, dict):
+            raise TypeError("proof must be a dict")
+        try:
+            bits = int(d["bits"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("missing or malformed 'bits'") from exc
+        if not (1 <= bits <= MAX_BITS):
+            raise ValueError(f"bits must be in [1, {MAX_BITS}]")
+
+        commitments = d.get("commitments")
+        bit_proofs = d.get("bit_proofs")
+        if not isinstance(commitments, list) or len(commitments) != bits:
+            raise ValueError("commitments must be a list of length bits")
+        if not isinstance(bit_proofs, list) or len(bit_proofs) != bits:
+            raise ValueError("bit_proofs must be a list of length bits")
+
+        # `hex(x)` always emits a lowercase "0x" prefix, so the maximum length
+        # of a serialized field is `2 + 2 * width_in_bytes`. Anything wider is
+        # rejected before `int(s, 16)` runs — that's the DoS guard.
+        max_elem_chars = 2 + 2 * params.elem_bytes
+        max_scalar_chars = 2 + 2 * params.scalar_bytes
+
+        def _parse_elem(s: object) -> int:
+            if not isinstance(s, str) or len(s) > max_elem_chars:
+                raise ValueError("group element encoding too wide")
+            return int(s, 16)
+
+        def _parse_scalar(s: object) -> int:
+            if not isinstance(s, str) or len(s) > max_scalar_chars:
+                raise ValueError("scalar encoding too wide")
+            return int(s, 16)
+
+        parsed_commitments = [_parse_elem(c) for c in commitments]
+        parsed_bit_proofs: list[dict] = []
+        required_keys = ("a0", "a1", "e0", "e1", "z0", "z1")
+        for bp in bit_proofs:
+            if not isinstance(bp, dict):
+                raise ValueError("bit_proof entry must be a dict")
+            missing = [k for k in required_keys if k not in bp]
+            if missing:
+                raise ValueError(f"bit_proof missing keys: {missing}")
+            parsed_bit_proofs.append({
+                "a0": _parse_elem(bp["a0"]),
+                "a1": _parse_elem(bp["a1"]),
+                "e0": _parse_scalar(bp["e0"]),
+                "e1": _parse_scalar(bp["e1"]),
+                "z0": _parse_scalar(bp["z0"]),
+                "z1": _parse_scalar(bp["z1"]),
+            })
+
+        return cls(bits=bits, commitments=parsed_commitments, bit_proofs=parsed_bit_proofs)
 
 
 def _seed(t: Transcript, commitment: int, threshold: int, bits: int,
@@ -144,8 +199,17 @@ def prove_ge(value: int, blinding: int, threshold: int, *, bits: int = 32,
     """
     if bits < 1:
         raise ValueError("bits must be >= 1")
+    if bits > MAX_BITS:
+        raise ValueError(f"bits must be <= {MAX_BITS}")
     if value < 0 or threshold < 0:
         raise ValueError("value and threshold must be non-negative")
+    # Integer-domain invariants. With the default 2048-bit group ``q`` is huge
+    # and these checks are formalities, but they prevent silent integer/modular
+    # confusion under custom small-group parameters.
+    if value >= params.q or threshold >= params.q:
+        raise ValueError("value and threshold must be < q")
+    if (1 << bits) >= params.q:
+        raise ValueError("2^bits must be < q")
     w = value - threshold
     if w < 0 or w >= (1 << bits):
         raise ValueError("value - threshold out of [0, 2^bits); cannot prove")
@@ -175,7 +239,13 @@ def verify_ge(commitment: int, threshold: int, proof: RangeProof, *,
     """Verify a :func:`prove_ge` proof against the public ``commitment``."""
     p = params
     bits = proof.bits
-    if bits < 1 or len(proof.commitments) != bits or len(proof.bit_proofs) != bits:
+    # Bound work before any modular exponentiation: a hostile proof must not
+    # be able to inflate verifier cost by claiming an absurd ``bits`` value.
+    if not (1 <= bits <= MAX_BITS):
+        return False
+    if len(proof.commitments) != bits or len(proof.bit_proofs) != bits:
+        return False
+    if not (0 <= threshold < p.q):
         return False
 
     # Untrusted group elements must be inside the prime-order subgroup, or the
@@ -186,7 +256,7 @@ def verify_ge(commitment: int, threshold: int, proof: RangeProof, *,
         return False
 
     # C' = C · g^(-threshold)
-    c_prime = (commitment * pow(pow(p.g, threshold % p.q, p.p), -1, p.p)) % p.p
+    c_prime = (commitment * pow(pow(p.g, threshold, p.p), -1, p.p)) % p.p
 
     # Π C_i^(2^i) must reconstruct C' (binds the bits to the committed value).
     acc = 1

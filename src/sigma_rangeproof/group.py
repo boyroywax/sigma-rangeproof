@@ -54,6 +54,13 @@ def _is_probable_prime(n: int, rounds: int = 40) -> bool:
     return True
 
 
+# Hard upper bound on `bits` for any range proof. Real callers do not need more
+# than 64 (the largest sensible integer width for a "value ≥ threshold" claim);
+# the verifier rejects proofs over this so an attacker cannot inflate work by
+# shipping a proof with absurdly large `bits`.
+MAX_BITS = 64
+
+
 @dataclass(frozen=True)
 class Params:
     """Group parameters: prime ``p``, subgroup order ``q``, generators ``g``, ``h``."""
@@ -67,6 +74,11 @@ class Params:
     @property
     def elem_bytes(self) -> int:
         return (self.p.bit_length() + 7) // 8
+
+    @property
+    def scalar_bytes(self) -> int:
+        """Canonical big-endian width of a scalar in ``[0, q)``."""
+        return (self.q.bit_length() + 7) // 8
 
     def validate(self, *, check_primality: bool = False) -> None:
         """Assert the parameters describe a safe-prime QR subgroup.
