@@ -49,7 +49,11 @@ account for them:
 
 - **No external audit.** The construction is standard and the test suite is
   adversarial (subgroup attacks, malleability, fuzzing, published KAT vectors),
-  but no third party has reviewed it. Treat accordingly.
+  but no third party has reviewed it. An in-house automated static self-review
+  is recorded under [`audits/`](audits/), and commissioning an external
+  cryptographic audit is tracked in
+  [issue #2](https://github.com/boyroywax/sigma-rangeproof/issues/2). Treat
+  accordingly.
 - **Not constant-time.** The arithmetic uses Python's `pow`, whose timing depends
   on secret exponents (the value and the blinding). Do not use this where an
   attacker can precisely measure prove-time against a secret you must protect.

@@ -8,4 +8,8 @@ Use the sign-off template in the
 page. Each report is bound to the specific commit it reviewed; changes after that
 commit are outside its scope.
 
-_No external audits have been completed yet._
+_No external (third-party) audits have been completed yet._
+
+An in-house **static self-review** (automated, not a third-party audit) is
+recorded in
+[`2026-06-10-static-self-review.md`](2026-06-10-static-self-review.md).

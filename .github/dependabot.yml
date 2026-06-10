@@ -1,0 +1,25 @@
+# Dependabot keeps the SHA-pinned GitHub Actions and the (small) Python
+# dev/docs requirements current. The library itself has zero runtime deps.
+#
+# When Dependabot opens a PR bumping an action's tag, the corresponding SHA
+# pin must be re-resolved manually to the new immutable commit. See the
+# "Pinning third-party Actions" section of CONTRIBUTING / docs/audit.md.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "pip"
+    directory: "/docs"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5

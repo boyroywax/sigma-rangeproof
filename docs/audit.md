@@ -25,6 +25,36 @@ What in-house review **cannot** substitute for, and an external audit should add
 an independent reimplementation / interop check, a second expert attacking the
 soundness argument, and a side-channel assessment.
 
+## Review history
+
+| Date | Reviewer | Version | Kind | Outcome |
+|---|---|---|---|---|
+| 2026-06-10 | GitHub Copilot Coding Agent | 0.1.1 | Automated static review (design, implementation, supply chain) | No soundness/hiding/binding break found. Two medium hardening gaps (unbounded proof size; integer-domain invariants not enforced) and three low/info supply-chain items recorded — all addressed in 0.1.2. |
+
+This is a **self-review using an automated tool**, not an independent third-party
+audit, and does not constitute a guarantee of security. The full record is kept
+under [`audits/`](https://github.com/boyroywax/sigma-rangeproof/tree/main/audits).
+An external cryptographic audit is still outstanding and is tracked in
+[issue #2](https://github.com/boyroywax/sigma-rangeproof/issues/2); see also
+[SECURITY.md](https://github.com/boyroywax/sigma-rangeproof/blob/main/SECURITY.md).
+
+## Supply-chain hardening
+
+The CI/release pipeline applies the following, so a reviewer does not have to
+re-derive it:
+
+- **Third-party GitHub Actions are pinned to immutable commit SHAs** (with a
+  trailing version comment), not mutable tags. Bumping a pin requires
+  re-resolving the SHA for the new tag with
+  `git ls-remote https://github.com/<owner>/<repo>.git refs/tags/<tag>` and
+  dereferencing annotated tags (`<tag>^{}`).
+- **Dependabot** watches the Actions and the Python dev/docs requirements
+  (`.github/dependabot.yml`).
+- **`pip-audit`** runs in CI over the docs/dev requirements (the library itself
+  has zero runtime dependencies).
+- **The docs site serves MathJax from the same origin** (vendored under
+  `docs/js/mathjax/`); no third-party CDN JavaScript is loaded.
+
 ## Scope for an external audit
 
 Suggested scope, for a fixed commit:

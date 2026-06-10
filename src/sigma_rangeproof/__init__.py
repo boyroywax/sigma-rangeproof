@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from .group import (
     DEFAULT_PARAMS,
+    MAX_BITS,
     Params,
     in_subgroup,
     is_canonical_scalar,
@@ -23,7 +24,7 @@ from .group import (
 from .pedersen import commit, open_commit
 from .rangeproof import RangeProof, prove_ge, verify_ge
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 __all__ = [
     "commit",
@@ -33,6 +34,7 @@ __all__ = [
     "RangeProof",
     "Params",
     "DEFAULT_PARAMS",
+    "MAX_BITS",
     "rand_scalar",
     "in_subgroup",
     "is_canonical_scalar",
