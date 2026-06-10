@@ -5,18 +5,22 @@ repo_url: https://github.com/boyroywax/sigma-rangeproof
 
 theme:
   name: material
+  logo: assets/sigma-rangeproof.svg
+  favicon: assets/favicon.png
   features:
     - navigation.sections
     - navigation.top
     - content.code.copy
   palette:
     - scheme: default
-      primary: indigo
+      primary: teal
+      accent: teal
       toggle:
         icon: material/weather-night
         name: Dark mode
     - scheme: slate
-      primary: indigo
+      primary: teal
+      accent: teal
       toggle:
         icon: material/weather-sunny
         name: Light mode

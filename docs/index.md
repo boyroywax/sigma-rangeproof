@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/sigma-rangeproof.svg" alt="sigma-rangeproof" width="128" height="128">
+</p>
+
 # sigma-rangeproof
 
 This library does one thing. You commit to a number. Later you convince someone
