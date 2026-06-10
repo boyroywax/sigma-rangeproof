@@ -1,26 +1,54 @@
 name: release
 
-# Publish to PyPI on a version tag, using PyPI Trusted Publishing (OIDC) — no
-# token stored. One-time setup on PyPI: project -> Settings -> Publishing ->
-# add a GitHub publisher with owner=boyroywax, repo=sigma-rangeproof,
-# workflow=release.yml, environment=pypi.
+# On a version tag (vX.Y.Z): run the test gate, build, publish to PyPI via
+# Trusted Publishing (OIDC, no stored token), and create a GitHub Release with
+# the wheel + sdist attached.
+#
+# Note: GitHub Packages has no Python/pip registry, so the GitHub-side
+# distribution is the Release assets below. They install directly, e.g.:
+#   pip install https://github.com/boyroywax/sigma-rangeproof/releases/download/vX.Y.Z/sigma_rangeproof-X.Y.Z-py3-none-any.whl
+# or straight from the tag: pip install git+https://github.com/boyroywax/sigma-rangeproof@vX.Y.Z
 
 on:
   push:
     tags: ["v*"]
 
+permissions:
+  id-token: write   # PyPI Trusted Publishing
+  contents: write   # create the GitHub Release
+
 jobs:
-  pypi:
+  release:
     runs-on: ubuntu-latest
     environment: pypi
-    permissions:
-      id-token: write   # required for trusted publishing
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install build twine
-      - run: python -m build
-      - run: twine check dist/*
-      - uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Test gate (no broken tag gets published)
+        run: |
+          pip install -e ".[dev]"
+          pytest -q --ignore=tests/test_fuzz.py
+
+      - name: Build sdist + wheel
+        run: |
+          pip install build twine
+          python -m build
+          twine check dist/*
+
+      - name: Publish to PyPI (Trusted Publishing)
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Create GitHub Release with artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          body: |
+            Install from PyPI: `pip install -U sigma-rangeproof`, or use the
+            wheel/sdist attached below.
+
+            See the [changelog](https://github.com/boyroywax/sigma-rangeproof/blob/main/CHANGELOG.md)
+            and [docs](https://boyroywax.github.io/sigma-rangeproof/).
