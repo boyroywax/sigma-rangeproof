@@ -2,6 +2,11 @@
 #   pip install -r docs/requirements.txt
 #   mkdocs serve     # live preview at http://127.0.0.1:8000
 #   mkdocs build     # static site into ./site
+#
+# Markdown is pinned deliberately: an unpinned Markdown floats to a version that
+# the older pymdown-extensions can't drive, which silently disables superfences
+# and breaks every fenced code block. Keep these four in step.
 mkdocs==1.6.1
-mkdocs-material==9.5.39
-pymdown-extensions==10.11.2
+mkdocs-material==9.7.6
+pymdown-extensions==10.21.3
+Markdown==3.9
