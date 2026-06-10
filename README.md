@@ -29,13 +29,16 @@ and how far above or below the bar it sits, stay hidden.
 
 ## Install
 
-Not on PyPI yet. For now, install from a checkout:
+```bash
+pip install sigma-rangeproof
+```
+
+Python 3.9 or newer. No compiled extensions, no C library to find at build time,
+and no runtime dependencies. To work from a checkout instead:
 
 ```bash
 pip install -e .
 ```
-
-Python 3.9 or newer. No compiled extensions, no C library to find at build time.
 
 ## The three calls
 
@@ -68,7 +71,8 @@ your values:
 - leave the default `bits=32` if you have no reason to narrow it
 
 The prover and verifier have to agree on `bits`; it travels inside the proof, so
-the verifier reads it from there.
+the verifier reads it from there. The width is capped at `MAX_BITS` (64); a proof
+claiming more is rejected before any arithmetic runs.
 
 ## Speed, honestly
 
@@ -114,12 +118,17 @@ The construction is textbook and the test suite is adversarial: alongside the
 happy path it checks that out-of-range values cannot be proved, that proofs do
 not transfer across thresholds or commitments, that bit positions cannot be
 reordered, that out-of-subgroup elements are rejected, and that proofs are
-non-malleable (a scalar shifted by the group order no longer verifies). On top of
-the fixed cases there is a property-based fuzz suite (Hypothesis) that asserts the
-same invariants over thousands of randomized inputs; run it hard with
+non-malleable (a scalar shifted by the group order no longer verifies). The
+verifier also treats every incoming proof as hostile until checked: it bounds its
+own work before touching the algebra, rejecting a proof that declares more than
+`MAX_BITS` (64) bit positions or a threshold outside `[0, q)`, and deserialization
+refuses hex fields wider than the canonical encoding. On top of the fixed cases
+there is a property-based fuzz suite (Hypothesis) that asserts the same invariants
+over thousands of randomized inputs; run it hard with
 `HYPOTHESIS_PROFILE=ci pytest tests/test_fuzz.py`. What it has not had is an
-external audit. Read it before you put real secrets behind it. It is short on
-purpose, partly so you can.
+external audit by a third party — the review so far, including a static
+self-review, is recorded under [`audits/`](audits/). Read it before you put real
+secrets behind it. It is short on purpose, partly so you can.
 
 ## License
 

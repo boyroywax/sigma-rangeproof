@@ -35,9 +35,9 @@ number, or even tell how far over the line it sits.
 
 ## What these docs cover
 
-The code is short, under three hundred lines, and most of it is one idea applied
-in layers. These pages build that idea up so the code reads as obvious by the
-time you get to it.
+The code is short — a few hundred lines across five small modules — and most of
+it is one idea applied in layers. These pages build that idea up so the code
+reads as obvious by the time you get to it.
 
 - [The math you need](background.md) sets up finite cyclic groups, the discrete
   logarithm problem, and Pedersen commitments. If you have seen a Diffie-Hellman
@@ -64,6 +64,7 @@ whole surface including the cases that are supposed to fail.
 It is not a general proof system. It proves one statement, a lower bound on a
 committed integer, and the closely related upper bound that falls out of the
 same construction. It is not aggregated or succinct in the Bulletproofs or SNARK
-sense; the proof grows linearly with the bit width. And it has not been audited.
-The construction is standard and the tests are pointed, but those are not the
-same as a third party trying to break it.
+sense; the proof grows linearly with the bit width. And it has not had an external
+audit — the construction is standard, the tests are pointed, and the review so far
+(including a static self-review under `audits/`) is recorded in the repository,
+but none of that is the same as a third party trying to break it.

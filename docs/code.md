@@ -44,14 +44,15 @@ the `secrets` module, the standard library's cryptographic random source. Plain
 Two functions, both one line of math. `commit(value, blinding)` returns
 
 ```python
-(pow(g, value % q, p) * pow(h, blinding % q, p)) % p
+(pow(g, value, p) * pow(h, blinding, p)) % p
 ```
 
 which is \(g^v h^r \bmod p\), and the blinding it used, drawing one at random if
 you did not supply it. `open_commit` recomputes the commitment from a claimed
-value and blinding and checks it matches. The value is reduced mod `q` because
-exponents live mod `q`; callers proving ranges keep the value a small
-non-negative integer so this reduction never actually bites.
+value and blinding and checks it matches. Both `value` and `blinding` must lie in
+\([0, q)\); rather than silently reducing them mod `q`, `commit` raises, so a
+caller that confuses the integer threshold window with the modular exponent gets
+an error instead of a commitment to a different number than it meant.
 
 ## transcript.py
 
