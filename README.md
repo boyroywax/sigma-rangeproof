@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://gitlab.pocketlabs.dev/core/sigma-rangeproof/-/raw/main/docs/assets/sigma-rangeproof-128.png" alt="sigma-rangeproof" width="128" height="128">
+  <img src="https://raw.githubusercontent.com/boyroywax/sigma-rangeproof/main/docs/assets/sigma-rangeproof-128.png" alt="sigma-rangeproof" width="128" height="128">
 </p>
 
 # sigma-rangeproof
