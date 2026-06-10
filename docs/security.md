@@ -57,6 +57,37 @@ absorbs the group parameters and the statement, so a proof cannot be replayed
 under a different group or threshold, but it can be replayed verbatim if you do
 not tie it to context.
 
+## Nonces, randomness, and side channels
+
+**Nonces must be fresh and never reused.** Every Schnorr commitment uses a random
+nonce \(k\), and the OR-proof simulator draws random \((e_\text{fake},
+z_\text{fake})\). These come from Python's `secrets`, a cryptographically secure
+source. The hazard to understand: reusing a nonce across two different challenges
+is the textbook way to leak a witness — two responses \(z = k + e x\) and
+\(z' = k + e' x\) with the same \(k\) give \(x = (z-z')(e-e')^{-1}\), exactly the
+extractor from the [Sigma page](sigma-protocols.md). The library never reuses a
+nonce, and because the challenge is derived by Fiat-Shamir from a transcript that
+includes the commitment, the same statement re-proved draws fresh randomness and
+a fresh challenge each time. If you port the construction, keep that property:
+either a CSPRNG per proof, or a deterministic nonce bound to the secret and the
+full transcript (RFC 6979 style). A predictable or repeated nonce is game over.
+
+**It is not constant-time.** The heavy lifting is Python's built-in `pow`, which
+is not constant-time, so running times depend on secret exponents (the value and
+the blinding). For this library's intended use — proving a public-ish threshold
+about a score — the timing channel is a minor concern, and Python offers no
+real constant-time big-integer path anyway. But do not use it to guard a secret
+where an attacker can measure prove-time precisely; that would want a
+constant-time backend (typically a native curve library), which is a different
+project.
+
+**API invariants.** A `Transcript` is single-use and statement-specific: it is
+constructed fresh inside each `prove_ge` / `verify_ge` call, seeded with that
+exact statement, and not shared across proofs. Do not reuse a commitment under a
+different statement, and do not feed one proof's transcript to another — the
+binding that makes the proof non-malleable depends on the transcript covering the
+whole statement and nothing else.
+
 ## What verification enforces on an untrusted proof
 
 A proof arriving from a stranger is hostile until checked, and `verify_ge`

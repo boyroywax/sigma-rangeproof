@@ -20,7 +20,9 @@ class Transcript:
         self._n = params.elem_bytes
         self.append_bytes(b"domain", domain)
         # Bind the group parameters so a proof can't be replayed under others.
-        self.append_int(b"p", params.p)
+        # p is absorbed as raw fixed-width bytes (not via append_int, which would
+        # reduce p mod p to zero and leave the modulus effectively unbound).
+        self.append_bytes(b"p", params.p.to_bytes(self._n, "big"))
         self.append_int(b"g", params.g)
         self.append_int(b"h", params.h)
 

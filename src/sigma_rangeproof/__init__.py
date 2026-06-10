@@ -23,7 +23,7 @@ from .group import (
 from .pedersen import commit, open_commit
 from .rangeproof import RangeProof, prove_ge, verify_ge
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 __all__ = [
     "commit",

@@ -75,6 +75,24 @@ handled by a running transcript (see [the code](code.md)); every public value
 gets absorbed in a fixed order, and challenges are read out of the accumulated
 state, so prover and verifier derive identical challenges without ever talking.
 
+A challenge is a scalar, so the hash output has to be mapped into
+\(\mathbb{Z}_q\). Concretely the transcript produces a 512-bit value — two
+SHA-256 evaluations over the current state, concatenated — interpreted as a
+big-endian integer and reduced mod \(q\):
+
+\[
+e \;=\; \big(\text{SHA256}(S \,\|\, \texttt{0x00}) \,\|\,
+                \text{SHA256}(S \,\|\, \texttt{0x01})\big) \bmod q .
+\]
+
+512 bits is far more challenge entropy than the ~112-bit security target needs
+(and, since \(2^{512} < q\), the reduction is injective here, so there is no
+modular bias). The exact byte layout of the state \(S\) — field ordering,
+domain tag, and encodings — is pinned down in the
+[encoding specification](spec.md); two implementations that follow it produce
+bit-identical challenges, which is what makes proofs interoperable and
+non-malleable.
+
 ## OR proofs: one of two, without saying which
 
 Now the move that makes range proofs work. Suppose there are two statements,
@@ -110,6 +128,17 @@ transcript, and those are identically distributed whether produced honestly or b
 the simulator. The verifier sees two well-formed proofs and cannot tell which one
 carried a real witness.
 
-That last sentence is the whole reason a range proof can hide a bit. The next
-page commits to each binary digit of a number and uses this OR proof to show the
-digit is 0 or 1, without revealing which.
+!!! warning "Soundness rests on a big challenge space"
+    A cheating prover wins a single OR-proof only by guessing the hash output,
+    with probability \(1/|\mathcal{E}|\) where \(\mathcal{E}\) is the challenge
+    space. Here that is ~\(2^{512}\), so the per-proof cheating probability is
+    negligible. A range proof chains \(n\) of these OR-proofs in **one**
+    transcript (each bit's challenge is drawn after the previous bits are
+    absorbed), so the soundness error grows only linearly in \(n\) — still
+    negligible. The thing that must not shrink is the challenge: a truncated or
+    biased hash-to-scalar would be the way to quietly break soundness, which is
+    why the [encoding spec](spec.md) fixes a 512-bit derivation.
+
+That last sentence about hiding the choice is the whole reason a range proof can
+hide a bit. The next page commits to each binary digit of a number and uses this
+OR proof to show the digit is 0 or 1, without revealing which.

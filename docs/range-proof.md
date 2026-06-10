@@ -108,6 +108,23 @@ combined with binding on \(C'\), says \(\sum_i b_i 2^i = w \bmod q\). Since each
 it and \(w\) sit well below \(q\) there is no wraparound, so the equality holds
 over the integers. Therefore \(w \in [0, 2^{n})\), which is the range claim.
 
+!!! warning "Two parameter conditions the soundness leans on"
+    The "no wrap-around" step is not free — it is a condition on the parameters:
+
+    - **\(2^n < q\).** The bit sum is computed mod \(q\); if the range were big
+      enough to wrap, a prover could pass the product check with a value that is
+      only congruent to \(w\) mod \(q\), not equal to it. With \(q \approx
+      2^{2047}\) and `bits` a small number, the margin is astronomical, but an
+      implementation must keep `bits` well under \(\log_2 q\). The committed
+      value itself must likewise be \(< q\).
+    - **\(h\) independent of \(g\).** The bit-soundness argument turns a non-bit
+      opening into a discrete log of \(g\) base \(h\). That only forbids cheating
+      if nobody knows \(\log_h g\), which is exactly why \(h\) is derived from a
+      hash of a fixed label rather than chosen
+      ([how, in the background](background.md#two-generators-with-no-known-relationship)).
+      A caller who supplied their own \(h\) with a known relationship to \(g\)
+      could forge proofs.
+
 Zero-knowledge chains together just as cleanly. The bit commitments are perfectly
 hiding, so they leak nothing about the bits. Each OR proof is simulatable, so it
 leaks nothing about which branch was real. A simulator can assemble a transcript

@@ -4,6 +4,29 @@ Everything here runs on three ideas: a group where multiplying is easy but
 dividing (in the logarithm sense) is hard, the hardness itself, and a way to
 lock a number inside a group element. Take them in order.
 
+!!! note "Assumptions at a glance"
+    Everything in these docs is stated for the group this library actually uses,
+    so the conventions are fixed up front:
+
+    - **Group.** A cyclic group \(G\) of **prime order \(q\)** — concretely the
+      prime-order subgroup of quadratic residues of a 2048-bit safe prime \(p =
+      2q+1\). Not an elliptic curve; the choice is explained in
+      [Security and parameters](security.md#why-these-parameters).
+    - **Notation.** **Multiplicative** throughout: group elements are written
+      \(g^x\) and combine by multiplication mod \(p\); a curve-style additive
+      \(xG\) never appears.
+    - **Two domains.** Group elements live mod \(p\); **all scalars** (exponents,
+      blindings, challenges, responses) live in \(\mathbb{Z}_q\) and are reduced
+      mod \(q\).
+    - **Hardness.** Discrete log in \(G\) is hard: given \(g\) and \(Y=g^x\),
+      recovering \(x\) is infeasible (~112-bit security at 2048 bits).
+    - **One group per proof.** A proof is bound to a single \((p, g, h)\); the
+      [transcript spec](spec.md) hashes those in, so elements from another group
+      can never be mixed in or replayed across groups.
+    - **No wrap-around.** A range proof over \(n\) bits requires \(2^n < q\) and
+      committed values \(< q\) (see [the range proof](range-proof.md)); both hold
+      with enormous margin here (\(q \approx 2^{2047}\)).
+
 ## A finite cyclic group
 
 Fix a large prime \(p\). The nonzero remainders mod \(p\), written
