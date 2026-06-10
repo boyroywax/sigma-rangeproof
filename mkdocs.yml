@@ -33,6 +33,7 @@ nav:
   - Reading the code: code.md
   - Encoding & transcript spec: spec.md
   - Security and parameters: security.md
+  - Audit and assurance: audit.md
   - API reference: api.md
 
 markdown_extensions:
