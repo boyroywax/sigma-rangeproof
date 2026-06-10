@@ -13,7 +13,13 @@ non-interactive). No trusted setup, no native dependencies.
 
 from __future__ import annotations
 
-from .group import DEFAULT_PARAMS, Params, rand_scalar
+from .group import (
+    DEFAULT_PARAMS,
+    Params,
+    in_subgroup,
+    is_canonical_scalar,
+    rand_scalar,
+)
 from .pedersen import commit, open_commit
 from .rangeproof import RangeProof, prove_ge, verify_ge
 
@@ -28,5 +34,7 @@ __all__ = [
     "Params",
     "DEFAULT_PARAMS",
     "rand_scalar",
+    "in_subgroup",
+    "is_canonical_scalar",
     "__version__",
 ]

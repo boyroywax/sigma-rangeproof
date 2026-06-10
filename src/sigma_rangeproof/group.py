@@ -123,3 +123,24 @@ DEFAULT_PARAMS.validate()
 def rand_scalar(params: Params = DEFAULT_PARAMS) -> int:
     """A uniform blinding/nonce scalar in ``[0, q)``."""
     return secrets.randbelow(params.q)
+
+
+def in_subgroup(x: int, params: Params = DEFAULT_PARAMS) -> bool:
+    """True iff ``x`` is a member of the order-``q`` subgroup ``G``.
+
+    Untrusted group elements must be checked before use: an element outside
+    ``G`` (e.g. a non-residue carrying the order-2 component) can otherwise slip
+    through the verification algebra. Membership is ``x^q ≡ 1 (mod p)`` with
+    ``x`` a non-zero residue.
+    """
+    return 0 < x < params.p and pow(x, params.q, params.p) == 1
+
+
+def is_canonical_scalar(x: int, params: Params = DEFAULT_PARAMS) -> bool:
+    """True iff ``x`` is a canonically reduced scalar in ``[0, q)``.
+
+    Rejecting non-canonical scalars (e.g. ``z + q``, which verifies identically
+    because ``h`` has order ``q``) makes proofs unique — important for any caller
+    that hashes or deduplicates them.
+    """
+    return 0 <= x < params.q

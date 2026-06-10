@@ -23,7 +23,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .group import DEFAULT_PARAMS, Params, rand_scalar
+from .group import (
+    DEFAULT_PARAMS,
+    Params,
+    in_subgroup,
+    is_canonical_scalar,
+    rand_scalar,
+)
 from .pedersen import commit
 from .transcript import Transcript
 
@@ -70,6 +76,13 @@ def _prove_bit(t: Transcript, c_i: int, bit: int, r_i: int, p: Params) -> dict:
 
 
 def _verify_bit(t: Transcript, c_i: int, bp: dict, p: Params) -> bool:
+    # Reject non-canonical scalars (z+q, e±q, ...) so a proof can't be mauled
+    # into an equivalent-but-different one that still verifies.
+    if not all(is_canonical_scalar(bp[k], p) for k in ("e0", "e1", "z0", "z1")):
+        return False
+    if not (in_subgroup(bp["a0"], p) and in_subgroup(bp["a1"], p)):
+        return False
+
     y0 = c_i
     y1 = (c_i * pow(p.g, -1, p.p)) % p.p
 
@@ -131,6 +144,8 @@ def prove_ge(value: int, blinding: int, threshold: int, *, bits: int = 32,
     """
     if bits < 1:
         raise ValueError("bits must be >= 1")
+    if value < 0 or threshold < 0:
+        raise ValueError("value and threshold must be non-negative")
     w = value - threshold
     if w < 0 or w >= (1 << bits):
         raise ValueError("value - threshold out of [0, 2^bits); cannot prove")
@@ -161,6 +176,13 @@ def verify_ge(commitment: int, threshold: int, proof: RangeProof, *,
     p = params
     bits = proof.bits
     if bits < 1 or len(proof.commitments) != bits or len(proof.bit_proofs) != bits:
+        return False
+
+    # Untrusted group elements must be inside the prime-order subgroup, or the
+    # verification algebra can be satisfied with out-of-group elements.
+    if not in_subgroup(commitment, p):
+        return False
+    if not all(in_subgroup(c_i, p) for c_i in proof.commitments):
         return False
 
     # C' = C · g^(-threshold)

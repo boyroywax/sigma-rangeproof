@@ -104,10 +104,13 @@ in Rust.
 
 ## A word on trust
 
-The construction is textbook and the test suite checks both that honest proofs
-verify and that the obvious cheats fail, but the code has not been through an
-external audit. Read it before you put real secrets behind it. It is short on
-purpose, partly so you can.
+The construction is textbook and the test suite is adversarial: alongside the
+happy path it checks that out-of-range values cannot be proved, that proofs do
+not transfer across thresholds or commitments, that bit positions cannot be
+reordered, that out-of-subgroup elements are rejected, and that proofs are
+non-malleable (a scalar shifted by the group order no longer verifies). What it
+has not had is an external audit. Read it before you put real secrets behind it.
+It is short on purpose, partly so you can.
 
 ## License
 

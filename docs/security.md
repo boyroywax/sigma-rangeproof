@@ -57,6 +57,33 @@ absorbs the group parameters and the statement, so a proof cannot be replayed
 under a different group or threshold, but it can be replayed verbatim if you do
 not tie it to context.
 
+## What verification enforces on an untrusted proof
+
+A proof arriving from a stranger is hostile until checked, and `verify_ge`
+treats it that way. Three classes of malformed input are rejected outright,
+before the algebra runs.
+
+Every group element in the proof, the commitment and each bit commitment, is
+checked for membership in the prime-order subgroup with \(x^{q} \equiv 1\). An
+element outside the subgroup, for instance one carrying the order-2 component,
+can otherwise satisfy parts of the verification equation and is a classic way to
+sneak past a naive verifier. The per-bit commitments produced inside the proof
+are checked the same way.
+
+Every scalar in the proof, the two challenges and two responses per bit, must be
+canonically reduced into \([0, q)\). Without this check a proof is malleable:
+because \(h\) has order \(q\), adding \(q\) to a response or shifting \(q\)
+between the two challenge halves yields a different-looking proof that still
+verifies. That does not let anyone prove a false statement, but it breaks any
+caller that treats a proof as unique, say by hashing it for replay protection or
+deduplication. Rejecting non-canonical scalars makes the encoding unique.
+
+The threshold and bit width are bound into the proof through the transcript and
+the product identity, so a proof made for one threshold does not verify under
+another, and the positions of the bits cannot be reordered. What verification
+does *not* do is tie the proof to a sender, a session, or a moment in time; that
+is context the caller layers on, as noted above.
+
 ## Why these parameters
 
 The prime is RFC 3526 group 14, a 2048-bit safe prime that has been public and
