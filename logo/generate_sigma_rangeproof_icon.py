@@ -8,26 +8,26 @@ def create_sigma_rangeproof_svg(svg_file="sigma_rangeproof_icon.svg"):
     """
     Create the Sigma Rangeproof SVG icon with:
     - Centered Σ
-    - 3D gradient shield
+    - 3D gradient shield in royal neon blue
     - Thick border around Σ for separation
     """
     size = 200
     dwg = svgwrite.Drawing(svg_file, size=(f"{size}px", f"{size}px"), viewBox=f"0 0 {size} {size}")
 
-    # Define gradient for shield
+    # Define gradient for shield (royal neon blue)
     gradient = dwg.linearGradient(start=("0%", "0%"), end=("0%", "100%"), id="shieldGradient")
-    gradient.add_stop_color(offset="0%", color="#33F5D2")  # Light teal top
-    gradient.add_stop_color(offset="100%", color="#007F6E")  # Dark teal bottom
+    gradient.add_stop_color(offset="0%", color="#4D9FFF")  # Light neon blue top
+    gradient.add_stop_color(offset="100%", color="#002B80")  # Deep royal blue bottom
     dwg.defs.add(gradient)
 
     # Background circle
     dwg.add(dwg.circle(center=("100", "100"), r="95",
-                       fill="#1E1E2E", stroke="#00D1B2", stroke_width=5))
+                       fill="#0A0A1A", stroke="#4D9FFF", stroke_width=5))
 
     # Shield with gradient fill
     shield_path = "M100 20 L160 50 L150 140 L100 180 L50 140 L40 50 Z"
     dwg.add(dwg.path(d=shield_path, fill="url(#shieldGradient)",
-                     stroke="#00D1B2", stroke_width=4))
+                     stroke="#4D9FFF", stroke_width=4))
 
     # Sigma symbol with thick border
     sigma_text = "Σ"
@@ -41,18 +41,18 @@ def create_sigma_rangeproof_svg(svg_file="sigma_rangeproof_icon.svg"):
                      font_size="90",
                      font_family="DejaVu Sans Mono, monospace",
                      fill="none",
-                     stroke="#1E1E2E",  # Dark border color
+                     stroke="#0A0A1A",  # Dark border color
                      stroke_width=8,
                      stroke_linejoin="round"))
 
-    # Fill layer (main Σ color)
+    # Fill layer (main Σ color - neon blue)
     dwg.add(dwg.text(sigma_text,
                      insert=(center_x, center_y),
                      text_anchor="middle",
                      dominant_baseline="middle",
                      font_size="90",
                      font_family="DejaVu Sans Mono, monospace",
-                     fill="#00D1B2"))
+                     fill="#4D9FFF"))
 
     dwg.save()
     print(f"✅ SVG saved to {svg_file}")
