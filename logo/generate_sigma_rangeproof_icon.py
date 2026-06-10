@@ -1,6 +1,8 @@
-import svgwrite
-import cairosvg
 import os
+
+import cairosvg
+import svgwrite
+
 
 def create_sigma_rangeproof_svg(svg_file="sigma_rangeproof_icon.svg"):
     """
