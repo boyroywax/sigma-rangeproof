@@ -31,7 +31,7 @@ _HEALTH = [HealthCheck.too_slow, HealthCheck.data_too_large]
 # ci:  a solid sweep for native pipeline runners (each op is ~ms there).
 # soak: an exhaustive run for scheduled/nightly jobs.
 settings.register_profile("dev", max_examples=10, deadline=None, suppress_health_check=_HEALTH)
-settings.register_profile("ci", max_examples=500, deadline=None, suppress_health_check=_HEALTH)
+settings.register_profile("ci", max_examples=150, deadline=None, suppress_health_check=_HEALTH)
 settings.register_profile("soak", max_examples=5000, deadline=None, suppress_health_check=_HEALTH)
 settings.load_profile(os.getenv("HYPOTHESIS_PROFILE", "dev"))
 

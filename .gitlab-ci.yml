@@ -26,7 +26,6 @@ default:
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   PIP_DISABLE_PIP_VERSION_CHECK: "1"
-  FUZZ_PROFILE: "ci"   # overridden to "soak" by scheduled pipelines
 
 # ── lint ─────────────────────────────────────────────────────────────────────
 lint:
@@ -35,12 +34,13 @@ lint:
     - pip install ruff
     - ruff check .
 
-# ── test matrix (3.9-3.12) ───────────────────────────────────────────────────
+# ── test matrix (3.9-3.12): the fast deterministic correctness + adversarial
+#    suite on every supported Python. The randomized fuzz runs once, below. ──
 .test_template:
   stage: test
   script:
-    - pip install -e ".[dev]"
-    - HYPOTHESIS_PROFILE="$FUZZ_PROFILE" pytest -q --junitxml=report.xml
+    - pip install -e . pytest
+    - pytest -q --ignore=tests/test_fuzz.py --junitxml=report.xml
   artifacts:
     when: always
     reports:
@@ -58,6 +58,22 @@ test:3.11:
 test:3.12:
   extends: .test_template
   image: python:3.12-slim
+
+# ── property-based fuzz: one job, lighter "ci" profile on push; the exhaustive
+#    "soak" profile on scheduled pipelines. ──
+fuzz:
+  stage: test
+  image: python:3.12-slim
+  variables:
+    FUZZ_PROFILE: "ci"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      variables:
+        FUZZ_PROFILE: "soak"
+    - when: on_success
+  script:
+    - pip install -e ".[dev]"
+    - HYPOTHESIS_PROFILE="$FUZZ_PROFILE" pytest -q tests/test_fuzz.py
 
 # ── docs build (validates the site on every push) ────────────────────────────
 docs:
