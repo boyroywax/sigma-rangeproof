@@ -1,0 +1,123 @@
+# CI/CD for sigma-rangeproof on gitlab.pocketlabs.dev
+#
+# Pipeline:
+#   lint     ruff
+#   test     pytest across Python 3.9-3.12 (incl. adversarial + Hypothesis fuzz)
+#   docs     mkdocs build (strict)
+#   build    sdist + wheel
+#   publish  -> GitLab package registry on every tag (uses CI_JOB_TOKEN)
+#            -> PyPI on tag, manual (uses $PYPI_API_TOKEN)
+#   pages    publish the docs site to GitLab Pages (default branch)
+#
+# Required CI/CD variables (Settings > CI/CD > Variables):
+#   PYPI_API_TOKEN   (masked, protected)  only needed for the PyPI publish job
+#
+# A scheduled pipeline with FUZZ_PROFILE=soak runs the exhaustive fuzz sweep.
+
+stages: [lint, test, docs, build, publish]
+
+default:
+  image: python:3.12-slim
+  cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .cache/pip
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  FUZZ_PROFILE: "ci"   # overridden to "soak" by scheduled pipelines
+
+# ── lint ─────────────────────────────────────────────────────────────────────
+lint:
+  stage: lint
+  script:
+    - pip install ruff
+    - ruff check .
+
+# ── test matrix (3.9-3.12) ───────────────────────────────────────────────────
+.test_template:
+  stage: test
+  script:
+    - pip install -e ".[dev]"
+    - HYPOTHESIS_PROFILE="$FUZZ_PROFILE" pytest -q --junitxml=report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+
+test:3.9:
+  extends: .test_template
+  image: python:3.9-slim
+test:3.10:
+  extends: .test_template
+  image: python:3.10-slim
+test:3.11:
+  extends: .test_template
+  image: python:3.11-slim
+test:3.12:
+  extends: .test_template
+  image: python:3.12-slim
+
+# ── docs build (validates the site on every push) ────────────────────────────
+docs:
+  stage: docs
+  script:
+    - pip install -r docs/requirements.txt
+    - mkdocs build --strict --site-dir site
+  artifacts:
+    paths: [site]
+    expire_in: 1 week
+
+# ── package build ────────────────────────────────────────────────────────────
+build:
+  stage: build
+  script:
+    - pip install build
+    - python -m build
+    - pip install twine && twine check dist/*
+  artifacts:
+    paths: [dist/*]
+    expire_in: 1 month
+
+# ── publish to the GitLab package registry (every tag) ───────────────────────
+publish:gitlab:
+  stage: publish
+  rules:
+    - if: '$CI_COMMIT_TAG'
+  script:
+    - pip install build twine
+    - python -m build
+    - >-
+      TWINE_USERNAME=gitlab-ci-token
+      TWINE_PASSWORD="$CI_JOB_TOKEN"
+      twine upload
+      --repository-url "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi"
+      dist/*
+
+# ── publish to PyPI (tag, manual, needs $PYPI_API_TOKEN) ─────────────────────
+publish:pypi:
+  stage: publish
+  rules:
+    - if: '$CI_COMMIT_TAG'
+      when: manual
+      allow_failure: true
+  script:
+    - pip install build twine
+    - python -m build
+    - twine check dist/*
+    - >-
+      TWINE_USERNAME=__token__
+      TWINE_PASSWORD="$PYPI_API_TOKEN"
+      twine upload dist/*
+
+# ── GitLab Pages: serve the docs site from the default branch ────────────────
+pages:
+  stage: publish
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  script:
+    - pip install -r docs/requirements.txt
+    - mkdocs build --strict --site-dir public
+  artifacts:
+    paths: [public]

@@ -3,6 +3,7 @@
 *.egg-info/
 *.pyc
 .DS_Store
+.hypothesis/
 .mypy_cache/
 .pytest_cache/
 .venv/
@@ -10,4 +11,5 @@
 __pycache__/
 build/
 dist/
+public/
 site/

@@ -30,11 +30,11 @@ class Transcript:
         self._h.update(len(data).to_bytes(8, "big"))
         self._h.update(data)
 
-    def append_bytes(self, label: bytes, data: bytes) -> "Transcript":
+    def append_bytes(self, label: bytes, data: bytes) -> Transcript:
         self._absorb(label, data)
         return self
 
-    def append_int(self, label: bytes, value: int) -> "Transcript":
+    def append_int(self, label: bytes, value: int) -> Transcript:
         # Fixed-width big-endian so encodings are unambiguous.
         self._absorb(label, (value % self._params.p).to_bytes(self._n, "big"))
         return self

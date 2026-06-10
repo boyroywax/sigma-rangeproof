@@ -118,7 +118,7 @@ class RangeProof:
         }
 
     @classmethod
-    def from_dict(cls, d: dict) -> "RangeProof":
+    def from_dict(cls, d: dict) -> RangeProof:
         return cls(
             bits=int(d["bits"]),
             commitments=[int(c, 16) for c in d["commitments"]],
